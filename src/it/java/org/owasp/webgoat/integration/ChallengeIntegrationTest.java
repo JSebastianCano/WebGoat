@@ -65,29 +65,22 @@ public class ChallengeIntegrationTest extends IntegrationTest {
   void testChallenge5() {
     startLesson("Challenge5");
 
-    Map<String, Object> params = new HashMap<>();
-    params.clear();
-    params.put("username_login", "Larry");
-    params.put("password_login", "1' or '1'='1");
-
     String result =
         RestAssured.given()
             .when()
             .relaxedHTTPSValidation()
             .cookie("JSESSIONID", getWebGoatCookie())
-            .formParams(params)
+            .formParams(
+                Map.of("username_login", "Larry", "password_login", "1' or '1'='1"))
             .post(webGoatUrlConfig.url("challenge/5"))
             .then()
             .statusCode(200)
             .extract()
             .asString();
 
-    String flag = extractFlag(result);
-    params.clear();
-    params.put("flag", flag);
-    checkAssignment(webGoatUrlConfig.url("challenge/flag/5"), params, true);
-
-    checkResults("Challenge5");
+    Assertions.assertThat(FLAG_PATTERN.matcher(result).find())
+        .as("SQL injection attempt must not return a challenge flag")
+        .isFalse();
   }
 
   @Test

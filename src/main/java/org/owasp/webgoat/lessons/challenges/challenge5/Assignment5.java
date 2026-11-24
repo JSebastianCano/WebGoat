@@ -32,27 +32,29 @@ public class Assignment5 implements AssignmentEndpoint {
   @PostMapping("/challenge/5")
   @ResponseBody
   public AttackResult login(
-      @RequestParam String username_login, @RequestParam String password_login) throws Exception {
-    if (!StringUtils.hasText(username_login) || !StringUtils.hasText(password_login)) {
+      @RequestParam("username_login") String usernameLogin,
+      @RequestParam("password_login") String passwordLogin)
+      throws Exception {
+    if (!StringUtils.hasText(usernameLogin) || !StringUtils.hasText(passwordLogin)) {
       return failed(this).feedback("required4").build();
     }
-    if (!"Larry".equals(username_login)) {
-      return failed(this).feedback("user.not.larry").feedbackArgs(username_login).build();
+    if (!"Larry".equals(usernameLogin)) {
+      return failed(this).feedback("user.not.larry").feedbackArgs(usernameLogin).build();
     }
     try (var connection = dataSource.getConnection()) {
-      PreparedStatement statement =
+      try (PreparedStatement statement =
           connection.prepareStatement(
-              "select password from challenge_users where userid = '"
-                  + username_login
-                  + "' and password = '"
-                  + password_login
-                  + "'");
-      ResultSet resultSet = statement.executeQuery();
+              "select password from challenge_users where userid = ? and password = ?")) {
+        statement.setString(1, usernameLogin);
+        statement.setString(2, passwordLogin);
 
-      if (resultSet.next()) {
-        return success(this).feedback("challenge.solved").feedbackArgs(flags.getFlag(5)).build();
-      } else {
-        return failed(this).feedback("challenge.close").build();
+        try (ResultSet resultSet = statement.executeQuery()) {
+          if (resultSet.next()) {
+            return success(this).feedback("challenge.solved").feedbackArgs(flags.getFlag(5)).build();
+          } else {
+            return failed(this).feedback("challenge.close").build();
+          }
+        }
       }
     }
   }

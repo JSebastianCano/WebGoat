@@ -9,6 +9,7 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.succes
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.owasp.webgoat.container.LessonDataSource;
@@ -56,6 +57,9 @@ public class Assignment5 implements AssignmentEndpoint {
           }
         }
       }
+    } catch (SQLException exception) {
+      log.error("Database failure while verifying Challenge 5 login", exception);
+      return failed(this).feedback("challenge.error").build();
     }
   }
 }
